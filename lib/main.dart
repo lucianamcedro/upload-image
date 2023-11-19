@@ -7,6 +7,7 @@ import 'package:camera_permission/usecase/photo_usecase.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 void main() {
   runApp(const MyApp());
@@ -65,7 +66,8 @@ class PhotoPageContentState extends State<PhotoPageContent> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
+                await _requestPermissions();
                 _showPhotoModal(context);
               },
               child: const Icon(Icons.camera),
@@ -120,6 +122,34 @@ class PhotoPageContentState extends State<PhotoPageContent> {
         ),
       ),
     );
+  }
+
+  Future<void> _requestPermissions() async {
+    final cameraStatus = await Permission.camera.request();
+    final photosStatus = await Permission.photos.request();
+
+    if (cameraStatus != PermissionStatus.granted ||
+        photosStatus != PermissionStatus.granted) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Permissões Necessárias'),
+            content: const Text(
+              'É necessário conceder permissões para acessar a câmera e a galeria de fotos.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: const Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
+    }
   }
 
   void _showPhotoModal(BuildContext context) {
